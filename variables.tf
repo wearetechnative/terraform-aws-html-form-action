@@ -20,3 +20,14 @@ variable "from_email" {
   description = "Receiving email address for forwarded messages, can also be configured in html form"
   default = ""
 }
+
+variable "use_altcha" {
+  type = bool
+  description = "Enable Altcha Spam protection"
+}
+
+variable "altcha_hmac_key" {
+  type = string
+  description = "HMAC Key to sign and validate Altcha Challenge"
+  default = "change.me.now"
+}

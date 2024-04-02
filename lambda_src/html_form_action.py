@@ -8,6 +8,11 @@ import urllib
 import urllib.request
 from string import Template
 
+#import uuid
+from random import randrange
+import hashlib
+import hmac
+
 
 def field_value(field_dict, key, default):
     if key in field_dict:
@@ -93,7 +98,7 @@ def raw_send(to_address, from_address, subject, mail_body):
         Source=from_address,
     )
 
-def lambda_handler(event, lambda_context):
+def lambda_handler_form_post(event, lambda_context):
 
     #slack_webhook_url = os.environ.get('SLACK_WEBHOOK_URL')
     #lambda_conf = json.loads(os.environ.get('LAMBDA_CONF'))
@@ -132,6 +137,43 @@ def lambda_handler(event, lambda_context):
             #"body": json.dumps(event)
             }
 
+def createHash(salt, number):
+    hasher = hashlib.sha256()
+    hasher.update((salt + str(number)).encode('utf-8'))
+    hash_value = hasher.digest()
+    return hash_value.hex()
+
+def createHmac(secret_key, challenge):
+    hash_algorithm = 'sha256'
+    hmac_object = hmac.new(secret_key.encode(), challenge.encode(), getattr(hashlib, hash_algorithm))
+    return hmac_object.hexdigest()
+
+def lambda_handler_altcha_challenge(event, lambda_context):
+
+    salt = os.urandom(12).hex()
+    secret_number = randrange(10000, 100000, 1)
+    print(secret_number)
+    hmac_secret = os.environ.get('ALTCHA_HMAC_KEY')
+
+    challenge = createHash(salt, secret_number)
+    signature = createHmac(hmac_secret, challenge)
+
+    ch = {}
+    ch["algorithm"] = "SHA-256"
+    ch["challenge"] = challenge
+    ch["salt"] = salt
+    ch["signature"] = signature
+
+    return_body = json.dumps(ch)
+
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json"
+            },
+        "body": return_body
+    }
+
 
 ## THIS BLOCK IS TOO RUN LAMBDA LOCALLY
 if __name__ == '__main__':
@@ -139,4 +181,9 @@ if __name__ == '__main__':
             "body": "_reply_mail_template=https://technative.eu/_mail/demo-template/&_visiter_email_field=Email&_subject=Demo+Form+Submission&_to=pim%40technative.nl&_from=pim%40technative.nl&_success_url=http%3A%2F%2Flocalhost%3A8000%2Fform_success.html&_fail_url=http%3A%2F%2Flocalhost%3A8000%2Fform.html&full-name=test&Email=pim@technative.eu&message=test"
             }
 
-    lambda_handler(mock_event, {})
+    #lambda_handler_form_post(mock_event, {})
+    print(lambda_handler_altcha_challenge({}, {}))
+
+
+
+
