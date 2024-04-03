@@ -169,6 +169,7 @@ def lambda_handler_altcha_challenge(event, lambda_context):
     return {
         "statusCode": 200,
         "headers": {
+            "Access-Control-Allow-Origin": "*",
             "Content-Type": "application/json"
             },
         "body": return_body
