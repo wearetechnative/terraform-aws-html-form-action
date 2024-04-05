@@ -20,6 +20,8 @@ module "lambda_function_formpost" {
   environment_variables = {
     TO_MAIL = var.to_email
     FROM_MAIL = var.from_email
+    ALTCHA_HMAC_KEY = var.altcha_hmac_key
+    USE_ALTCHA = var.use_altcha
   }
 
   attach_policy_json = true

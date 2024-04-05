@@ -12,6 +12,7 @@ from string import Template
 from random import randrange
 import hashlib
 import hmac
+import base64
 
 
 def field_value(field_dict, key, default):
@@ -19,6 +20,10 @@ def field_value(field_dict, key, default):
         return field_dict[key][0]
     else:
         return default
+
+def clean_fields(fields):
+    fields.pop('altcha', None)
+    return fields
 
 def flatten_fields(fields):
     new_fields = {}
@@ -98,44 +103,86 @@ def raw_send(to_address, from_address, subject, mail_body):
         Source=from_address,
     )
 
-def lambda_handler_form_post(event, lambda_context):
+def fail(message = "unknown"):
+    return {
+        "statusCode": 500,
+        "headers": {
+            "Content-Type": "text/html"
+        },
+        "body": "<h1>FAIL</h1> " + message
+    }
 
-    #slack_webhook_url = os.environ.get('SLACK_WEBHOOK_URL')
-    #lambda_conf = json.loads(os.environ.get('LAMBDA_CONF'))
-    #sts_master_account_role_arn = os.environ.get('STS_MASTER_ACCOUNT_ROLE_ARN')
-    #default_threshold = os.environ.get('DEFAULT_THRESHOLD')
+def success(message = "success"):
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "text/html"
+        },
+        "body": "<html><head></head><body>"+message+"</body></html>"
+    }
+
+def redirect(url):
+    return_body=f"<html><head><meta http-equiv=\"Refresh\" content=\"0; URL={url}\" /></head><body></body></html>"
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "text/html"
+        },
+        "body": return_body
+    }
+
+def lambda_handler_form_post(event, lambda_context):
 
     queryStr = event["body"]
     fields = urllib.parse.parse_qs(queryStr)
 
+    fail_url = field_value(fields, "_fail_url", "")
+    if(not validate_altcha(fields)):
+        if(fail_url == ""):
+            return fail("Wrong aptcha")
+        else:
+            return redirect(fail_url)
 
     success_url = field_value(fields, "_success_url", "")
-    return_body="<html> <head> </head> <body> Form has been submitted.  </body> </html>"
-    if(success_url != ""):
-        return_body=f"<html><head><meta http-equiv=\"Refresh\" content=\"0; URL={success_url}\" /></head><body></body></html>"
 
     try:
-        send_form_mail(fields)
-        send_reply_mail(fields)
+        mail_fields = clean_fields(fields)
+        send_form_mail(mail_fields)
+        send_reply_mail(mail_fields)
+
+        if(success_url == ""):
+            return success("Form sent successfully.")
+        else:
+            return redirect(success_url)
 
     except ClientError as e:
-        return {
-            "statusCode": 200,
-            "headers": {
-                "Content-Type": "text/html"
-                },
-            "body": "<h1>FAIL</h1>" + e.response['Error']['Message']
-            }
+        if(fail_url == ""):
+            return fail(e.response['Error']['Message'])
+        else:
+            return redirect(fail_url)
+
+
+def validate_altcha(fields):
+    use_altcha = os.environ.get("USE_ALTCHA", 'False').lower() in ('True', 'true', '1', 't')
+
+    if(not use_altcha):
+        return True
 
     else:
-        return {
-            "statusCode": 200,
-            "headers": {
-                "Content-Type": "text/html"
-                },
-            "body": return_body
-            #"body": json.dumps(event)
-            }
+        if('altcha' in fields.keys()):
+            altchafield = fields['altcha'][0]
+            data = json.loads(base64.b64decode(altchafield))
+
+            hmac_secret = os.environ.get('ALTCHA_HMAC_KEY')
+
+            alg_ok = data['algorithm'] == 'SHA-256';
+            challenge_ok = data['challenge'] == createHash(data['salt'], data['number'])
+            signature_ok = data['signature'] == createHmac(hmac_secret, data['challenge'])
+
+            if(alg_ok and challenge_ok and signature_ok):
+                return True
+
+    return False
 
 def createHash(salt, number):
     hasher = hashlib.sha256()
@@ -152,7 +199,6 @@ def lambda_handler_altcha_challenge(event, lambda_context):
 
     salt = os.urandom(12).hex()
     secret_number = randrange(10000, 100000, 1)
-    print(secret_number)
     hmac_secret = os.environ.get('ALTCHA_HMAC_KEY')
 
     challenge = createHash(salt, secret_number)
@@ -166,6 +212,7 @@ def lambda_handler_altcha_challenge(event, lambda_context):
 
     return_body = json.dumps(ch)
 
+
     return {
         "statusCode": 200,
         "headers": {
@@ -178,13 +225,21 @@ def lambda_handler_altcha_challenge(event, lambda_context):
 
 ## THIS BLOCK IS TOO RUN LAMBDA LOCALLY
 if __name__ == '__main__':
+
+    # with altcha
     mock_event = {
-            "body": "_reply_mail_template=https://technative.eu/_mail/demo-template/&_visiter_email_field=Email&_subject=Demo+Form+Submission&_to=pim%40technative.nl&_from=pim%40technative.nl&_success_url=http%3A%2F%2Flocalhost%3A8000%2Fform_success.html&_fail_url=http%3A%2F%2Flocalhost%3A8000%2Fform.html&full-name=test&Email=pim@technative.eu&message=test"
-            }
+        "body": "_reply_mail_template=https://technative.eu/_mail/demo-template/?_visiter_email_field=Email&_subject=Demo+Form+Submission&_to=pim%40technative.nl&_from=pim%40technative.nl&_success_url=http%3A%2F%2Flocalhost%3A8000%2Fform_success.html&_fail_url=http%3A%2F%2Flocalhost%3A8000%2Ffail.html&Name=test&Email=pim@technative.eu&message=test&altcha=eyJhbGdvcml0aG0iOiJTSEEtMjU2IiwiY2hhbGxlbmdlIjoiZTZhNWI4Njk1NzA5NTg2YzBhYWU5MGQxYTUwZWJkYzRiY2QxMzU5Yjc5ZTBkYTZhZjNkYjg2N2VjYzIzYjJkOSIsIm51bWJlciI6MzM3ODEsInNhbHQiOiIxMmVlNDhkYmMyMjg3M2JlZTAzNGE2MGEiLCJzaWduYXR1cmUiOiIyYzA5MTY3NWM3OTAxMzM4NTYwNzY3ZmYzMWRiZDYwZDE2YTczN2MzMmI3ODVjYTMwODI2MWJlN2QwZWFlZDUwIiwidG9vayI6MzQ3NX0="
+    }
 
-    #lambda_handler_form_post(mock_event, {})
-    print(lambda_handler_altcha_challenge({}, {}))
+    # without altcha
+    mock_event2 = {
+        "body": "_reply_mail_template=https://technative.eu/_mail/demo-template/?_visiter_email_field=Email&_subject=Demo+Form+Submission&_to=pim%40technative.nl&_from=pim%40technative.nl&_success_url=http%3A%2F%2Flocalhost%3A8000%2Fform_success.html&_fail_url=http%3A%2F%2Flocalhost%3A8000%2Ffail.html&Name=test&Email=pim@technative.eu&message=test"
+    }
 
+    # without altcha and no _fail_url
+    mock_event3 = {
+        "body": "_reply_mail_template=https://technative.eu/_mail/demo-template/?_visiter_email_field=Email&_subject=Demo+Form+Submission&_to=pim%40technative.nl&_from=pim%40technative.nl&_success_url=http%3A%2F%2Flocalhost%3A8000%2Fform_success.html&Name=test&Email=pim@technative.eu&message=test"
+    }
 
-
-
+    print(lambda_handler_form_post(mock_event, {}))
+    #print(lambda_handler_altcha_challenge({}, {}))
