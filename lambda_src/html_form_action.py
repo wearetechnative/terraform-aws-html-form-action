@@ -133,19 +133,19 @@ def redirect(url):
 
 def lambda_handler_form_post(event, lambda_context):
 
-    queryStr = event["body"]
-    fields = urllib.parse.parse_qs(queryStr)
-
-    fail_url = field_value(fields, "_fail_url", "")
-    if(not validate_altcha(fields)):
-        if(fail_url == ""):
-            return fail("Wrong aptcha")
-        else:
-            return redirect(fail_url)
-
-    success_url = field_value(fields, "_success_url", "")
-
     try:
+        queryStr = event["body"]
+        fields = urllib.parse.parse_qs(queryStr)
+
+        fail_url = field_value(fields, "_fail_url", "")
+        if(not validate_altcha(fields)):
+            if(fail_url == ""):
+                return fail("Wrong aptcha")
+            else:
+                return redirect(fail_url)
+
+        success_url = field_value(fields, "_success_url", "")
+
         mail_fields = clean_fields(fields)
         send_form_mail(mail_fields)
         send_reply_mail(mail_fields)
@@ -221,7 +221,6 @@ def lambda_handler_altcha_challenge(event, lambda_context):
             },
         "body": return_body
     }
-
 
 ## THIS BLOCK IS TOO RUN LAMBDA LOCALLY
 if __name__ == '__main__':
