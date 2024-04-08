@@ -1,0 +1,51 @@
+<html>
+  <head>
+    <title>TAHFA Demo with Altcha</title>
+
+    <!-- ADD <SCRIPT> TAG -->
+    <script async defer src="/altcha.js" type="module"></script>
+
+  </head>
+  <style>
+    html{
+      font-family: sans-serif;
+      font-size: 16px;
+    }
+    div{
+      margin:auto;
+      width: 600px;
+    }
+    textarea,input{
+      width: 100%;
+      margin:1em;
+    }
+  </style>
+  <body>
+    <div>
+
+      <h1>Demo Form to AWS API-Gateway/Lambda</h1>
+
+      <form action="https://XXXXXXXXXX.execute-api.eu-central-1.amazonaws.com/formpost/message" method="post">
+
+        <!-- Add <script> tag -->
+        <script async defer src="/altcha.js" type="module"></script>
+
+        <!-- FORM CONFIGURATION -->
+        <input type="hidden" name="_subject" value="Demo Form Submission">
+        <input type="hidden" name="_success_url" value="http://localhost:8000/form_success.html">
+        <input type="hidden" name="_fail_url" value="http://localhost:8000/fail.html">
+
+        <!-- FORM FIELDS -->
+        <input placeholder="Full Name" type="text" name="full-name"><br>
+        <input placeholder="Email" type="text" name="Email"><br>
+        <textarea name="message" placeholder="Your message"></textarea><br>
+
+        <!-- USE <ALTCHA-WIDGET> TAG IN YOUR FORMS -->
+        <altcha-widget challengeurl="https://XXXXXXXXXX.execute-api.eu-central-1.amazonaws.com/altcha_challenge/message"></altcha-widget>
+
+        <input type="submit" value="send"></br>
+
+      </form>
+      <div>
+  </body>
+</html>

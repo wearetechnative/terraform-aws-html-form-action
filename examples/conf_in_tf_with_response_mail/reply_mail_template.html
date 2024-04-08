@@ -1,0 +1,19 @@
+<!--
+The mail_template could look like this. The title is used as subject. The form
+handler will try to substitute variables with the fields from the form.
+
+Make sure this mail template is reachable by the lambda function. Localhost will not work.
+-->
+<html>
+    <head>
+        <title>Mailform submitted</title>
+    </head>
+    <body>
+        Dear $full_name,
+
+        Your mail has been sent.
+
+        Cheers!
+    </body>
+</html>
+

@@ -1,0 +1,50 @@
+<html>
+  <head>
+    <title>TAHFA Demo with auto reply mail</title>
+  </head>
+  <style>
+    html{
+      font-family: sans-serif;
+      font-size: 16px;
+    }
+    div{
+      margin:auto;
+      width: 600px;
+    }
+    textarea,input{
+      width: 100%;
+      margin:1em;
+    }
+  </style>
+  <body>
+    <div>
+
+      <h1>TAHFA Demo with auto reply mail</h1>
+
+      <form action="https://XXXXXXXXXX.execute-api.eu-central-1.amazonaws.com/formpost/message" method="post">
+
+        <!-- Add <script> tag -->
+        <script async defer src="/altcha.js" type="module"></script>
+
+        <!-- FORM CONFIGURATION -->
+        <input type="hidden" name="_subject" value="Demo Form Submission">
+        <input type="hidden" name="_success_url" value="http://localhost:8000/form_success.html">
+        <input type="hidden" name="_fail_url" value="http://localhost:8000/fail.html">
+
+          <!-- SET THE FIELD IN THIS FORM WHICH CONTAINS THE VISITER EMAIL ADDRESS TO SEND A REPLY MAIL TO -->
+        <input type="hidden" name="_visiter_email_field" value="Email">
+
+        <!-- THIS FIELD CONTAINS A LINK TO A MAIL TEMPLATE. THIS IS HTML FILE WHICH IS USED TO CREATE A REPLY -->
+        <input type="hidden" name="_reply_mail_template" value="http://example.com/reply_mail_template.html">
+
+        <!-- FORM FIELDS -->
+        <input placeholder="Full Name" type="text" name="full-name"><br>
+        <input placeholder="Email" type="text" name="Email"><br>
+        <textarea name="message" placeholder="Your message"></textarea><br>
+
+        <input type="submit" value="send"></br>
+
+      </form>
+      <div>
+  </body>
+</html>
