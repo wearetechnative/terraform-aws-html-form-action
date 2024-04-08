@@ -1,4 +1,4 @@
-# TAHFA (Terraform AWS HTML Form Action) ![](https://img.shields.io/github/workflow/status/wearetechnative/terraform-aws-html-form-action/Lint?style=plastic)
+# TAHFA (Terraform AWS HTML Form Action) <!-- ![](https://img.shields.io/github/workflow/status/wearetechnative/terraform-aws-html-form-action/Lint?style=plastic) -->
 
 TAHFA implements a simple form handler for plain html forms. Great for static
 websites. Sets up Lambda and API Gateway.
