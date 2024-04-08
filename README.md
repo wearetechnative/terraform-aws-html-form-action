@@ -31,12 +31,12 @@ fingerprinting, does not track users, and is fully compliant with GDPR.
 
 ## Requirements
 
-You need a configured SES domain or SES emails available in the same account.
+- A configured SES domain or SES emails available in the same account.
 
 ## Example
 
-Checkout the examples for complete implementations. The inline example below
-shows how a simple implementation works.
+Checkout the [examples](./examples) for complete implementations. The inline example below
+shows a simple usa case.
 
 ### terraform
 
@@ -74,11 +74,6 @@ The form html looks like this.
   <input type="submit" value="send"></br>
 
 </form>
-```
-## Local Python development
-
-```
-AWS_PROFILE=some-profile python lambda_src/html_form_action.py
 ```
 
 <!-- BEGIN_TF_DOCS -->
