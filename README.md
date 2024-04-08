@@ -10,7 +10,7 @@ websites. Sets up Lambda and API Gateway.
 - Creates Lambda mailform POST endpoint
 - Optional Success URL redirect
 - Optional Failure URL redirect
-- Optional [Altcha](https://altcha.org) spam protection
+- Optional [ALTCHA](https://altcha.org) Spam Protection
 - Optional Mail reply template
 
 ## How does it work
@@ -23,7 +23,7 @@ formdata to the lambda function and this sends the email.
 
 ![](altcha.png)
 
-Since version 0.2 TAHFA features Altcha challege and validation funcions.
+Since version 0.2 TAHFA features [ALTCHA](https://altcha.org) challege and validation funcions.
 ALTCHA is a free, open-source CAPTCHA alternative. ALTCHA uses a proof-of-work
 mechanism to protect your website, APIs, and online services from spam and
 unwanted content. ALTCHA is free, open-source, does not use cookies nor
