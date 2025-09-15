@@ -5,7 +5,7 @@ module "lambda_function_altchachallenge" {
   function_name = "${var.name}-altcha"
   description   = "Creates altcha_challenge"
   handler       = "html_form_action.lambda_handler_altcha_challenge"
-  runtime       = "python3.9"
+  runtime       = "python3.13"
 
   source_path = [
     format("%s/lambda_src", abspath(path.module)),

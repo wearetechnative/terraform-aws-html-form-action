@@ -5,7 +5,7 @@ module "lambda_function_formpost" {
   function_name = "${var.name}-formpost"
   description   = "Sends mails at HTML Form submissions"
   handler       = "html_form_action.lambda_handler_form_post"
-  runtime       = "python3.9"
+  runtime       = "python3.13"
 
   source_path = [
     format("%s/lambda_src", abspath(path.module)),
