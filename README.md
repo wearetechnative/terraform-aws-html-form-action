@@ -29,6 +29,25 @@ mechanism to protect your website, APIs, and online services from spam and
 unwanted content. ALTCHA is free, open-source, does not use cookies nor
 fingerprinting, does not track users, and is fully compliant with GDPR.
 
+## Security
+
+By default the handler is hardened against abuse:
+
+- **Recipient/sender are server-side.** The submitter cannot control the mail
+  recipient (`_to`) or sender (`_from`); these come from `to_email` / `from_email`
+  only. Set `allow_client_addresses = true` to re-enable form-supplied addresses,
+  but only for fully trusted, single-tenant forms — enabling it turns the endpoint
+  into an open mail relay usable for spoofing and phishing from your domain.
+- **Reply templates are allowlisted.** `_reply_mail_template` URLs are only fetched
+  when their host is listed in `allowed_template_hosts`, over https, without
+  following redirects. This prevents SSRF and local file reads (`file://`). Leave
+  `allowed_template_hosts` empty to disable the reply-mail feature entirely.
+- **Submitted fields are HTML-escaped** in the notification mail body.
+
+Store `altcha_hmac_key` in a secret store (SSM Parameter Store / Secrets Manager),
+never hardcoded in Terraform. Note that ALTCHA is a proof-of-work spam speed bump,
+not an authentication or authorization control.
+
 ## Requirements
 
 - A configured SES domain or SES emails available in the same account.
@@ -113,7 +132,9 @@ The form html looks like this.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_allow_client_addresses"></a> [allow\_client\_addresses](#input\_allow\_client\_addresses) | Allow the submitter to set recipient (_to) and sender (_from) via hidden form fields. Keep false unless the form is fully trusted; enabling it turns the endpoint into an open mail relay. | `bool` | `false` | no |
 | <a name="input_allowed_origin"></a> [allowed\_origin](#input\_allowed\_origin) | Which origin to allow submissions from. Use * when testing | `string` | `"*"` | no |
+| <a name="input_allowed_template_hosts"></a> [allowed\_template\_hosts](#input\_allowed\_template\_hosts) | Comma-separated allowlist of hostnames that may serve reply-mail templates. Empty disables the feature. Prevents SSRF / local file reads. | `string` | `""` | no |
 | <a name="input_altcha_hmac_key"></a> [altcha\_hmac\_key](#input\_altcha\_hmac\_key) | HMAC Key to sign and validate Altcha Challenge | `string` | `"change.me.now"` | no |
 | <a name="input_from_email"></a> [from\_email](#input\_from\_email) | Receiving email address for forwarded messages, can also be configured in html form | `string` | `""` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name to use for function and api gateway | `string` | n/a | yes |
