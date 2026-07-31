@@ -6,6 +6,7 @@ import re
 import urllib.parse
 import urllib
 import urllib.request
+import html as html_lib
 from string import Template
 
 #import uuid
@@ -34,20 +35,50 @@ def flatten_fields(fields):
     return new_fields
 
 
+def client_addresses_allowed():
+    # When disabled (default) the submitter cannot control the recipient (_to) or
+    # sender (_from) of the mail. Enable ONLY for trusted, single-tenant forms.
+    # Leaving this off closes the open-relay / sender-spoofing vector.
+    return os.environ.get("ALLOW_CLIENT_ADDRESSES", "false").lower() in ('true', '1', 't', 'yes')
+
+
 def form_mail_body(field_dict):
-    html = ""
+    body = ""
     for key, value in field_dict.items():
         if key[0] == "_":
             continue
 
-        html += "<p><strong>"+key+":</strong><br>"
-        html += value[0]+"</p>"
+        # Escape submitter-controlled data so it cannot inject HTML into the
+        # notification mail that staff read.
+        body += "<p><strong>" + html_lib.escape(key) + ":</strong><br>"
+        body += html_lib.escape(value[0]) + "</p>"
 
-    return html
+    return body
+
+
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    # Refuse redirects so an allowlisted host cannot 302 the request to an
+    # internal address or a different scheme.
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
 
 def get_template(link):
-    f = urllib.request.urlopen(link)
-    template = f.read()
+    # Prevent SSRF / local file reads: only https, only allowlisted hosts, no
+    # redirects, bounded timeout. ALLOWED_TEMPLATE_HOSTS is a comma-separated
+    # list of hostnames that may serve reply templates.
+    parsed = urllib.parse.urlparse(link)
+    allowed_hosts = [h.strip() for h in os.environ.get("ALLOWED_TEMPLATE_HOSTS", "").split(",") if h.strip()]
+
+    if parsed.scheme != "https":
+        raise ValueError("reply mail template URL must use https")
+    if not allowed_hosts or parsed.hostname not in allowed_hosts:
+        raise ValueError("reply mail template host is not in ALLOWED_TEMPLATE_HOSTS")
+
+    opener = urllib.request.build_opener(_NoRedirectHandler)
+    request = urllib.request.Request(link, method="GET")
+    with opener.open(request, timeout=5) as f:
+        template = f.read()
     return template.decode("utf-8")
 
 def send_reply_mail(fields):
@@ -58,21 +89,31 @@ def send_reply_mail(fields):
 
             mail_template = str(get_template(fields["_reply_mail_template"][0]))
             src = Template(mail_template)
-            mail_body = src.substitute(flatten_fields(fields))
+            # safe_substitute avoids KeyError/ValueError on unexpected $ tokens.
+            mail_body = src.safe_substitute(flatten_fields(fields))
 
             match = re.search('<title>(.*?)</title>', mail_body)
             subject = match.group(1) if match else 'No subject'
 
-            from_address = field_value(fields, "_from", os.environ.get('FROM_MAIL'))
+            from_address = os.environ.get('FROM_MAIL')
+            if client_addresses_allowed():
+                from_address = field_value(fields, "_from", from_address)
 
             raw_send(to_address, from_address, subject, mail_body)
 
 def send_form_mail(fields):
     field_html = form_mail_body(fields)
     mail_body = f" <html> <head></head> <body> <h1>Form data</h1>{field_html} </body> </html> "
-    to_address = field_value(fields, "_to", os.environ.get('TO_MAIL'))
-    from_address = field_value(fields, "_from", os.environ.get('FROM_MAIL'))
-    subject = field_value(fields,"_subject", "Form Submission")
+
+    # Recipient and sender come from server-side configuration by default.
+    # Only honour submitter-supplied _to / _from when explicitly opted in.
+    to_address = os.environ.get('TO_MAIL')
+    from_address = os.environ.get('FROM_MAIL')
+    if client_addresses_allowed():
+        to_address = field_value(fields, "_to", to_address)
+        from_address = field_value(fields, "_from", from_address)
+
+    subject = field_value(fields, "_subject", "Form Submission")
 
     raw_send(to_address, from_address, subject, mail_body)
 
@@ -133,6 +174,7 @@ def redirect(url):
 
 def lambda_handler_form_post(event, lambda_context):
 
+    fail_url = ""
     try:
         queryStr = event["body"]
         fields = urllib.parse.parse_qs(queryStr)
@@ -158,6 +200,13 @@ def lambda_handler_form_post(event, lambda_context):
     except ClientError as e:
         if(fail_url == ""):
             return fail(e.response['Error']['Message'])
+        else:
+            return redirect(fail_url)
+    except Exception:
+        # Do not leak internal error details (e.g. rejected template URLs) to
+        # the caller.
+        if(fail_url == ""):
+            return fail("Could not process submission")
         else:
             return redirect(fail_url)
 

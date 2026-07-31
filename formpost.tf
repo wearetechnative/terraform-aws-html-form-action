@@ -22,6 +22,8 @@ module "lambda_function_formpost" {
     FROM_MAIL = var.from_email
     ALTCHA_HMAC_KEY = var.altcha_hmac_key
     USE_ALTCHA = var.use_altcha
+    ALLOW_CLIENT_ADDRESSES = var.allow_client_addresses
+    ALLOWED_TEMPLATE_HOSTS = var.allowed_template_hosts
   }
 
   attach_policy_json = true

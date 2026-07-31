@@ -21,6 +21,18 @@ variable "from_email" {
   default = ""
 }
 
+variable "allow_client_addresses" {
+  type = bool
+  description = "Allow the submitter to set the recipient (_to) and sender (_from) via hidden form fields. SECURITY: keep this false unless the form is fully trusted; enabling it turns the endpoint into an open mail relay."
+  default = false
+}
+
+variable "allowed_template_hosts" {
+  type = string
+  description = "Comma-separated allowlist of hostnames that may serve reply-mail templates (_reply_mail_template). Leave empty to disable the reply-mail template feature. Only https URLs on these hosts are fetched; prevents SSRF / local file reads."
+  default = ""
+}
+
 variable "use_altcha" {
   type = bool
   description = "Enable Altcha Spam protection"
