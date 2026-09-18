@@ -59,11 +59,16 @@ resource "aws_api_gateway_integration" "message_altchachallenge" {
 }
 
 resource "aws_api_gateway_deployment" "altcha_challenge" {
-  stage_name = "altcha_challenge"
   rest_api_id = aws_api_gateway_rest_api.altcha_challenge.id
   depends_on = [
     aws_api_gateway_integration.message_altchachallenge,
   ]
+}
+
+resource "aws_api_gateway_stage" "altcha_challenge" {
+  deployment_id = aws_api_gateway_deployment.altcha_challenge.id
+  rest_api_id   = aws_api_gateway_rest_api.altcha_challenge.id
+  stage_name    = "altcha_challenge"
 }
 
 module "resource_cors_altchachallenge" {

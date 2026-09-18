@@ -8,3 +8,5 @@ on:
 jobs:
   security-scan:
     uses: wearetechnative/reusable_workflow_terraform/.github/workflows/security-scan.yml@v1
+    with:
+      block-on: HIGH,CRITICAL

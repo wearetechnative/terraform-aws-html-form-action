@@ -22,8 +22,9 @@ variable "from_email" {
 }
 
 variable "use_altcha" {
-  type = bool
-  description = "Enable Altcha Spam protection"
+  type        = bool
+  description = "Enable Altcha spam protection. Opt-in: leaving it off keeps the plain form handler."
+  default     = false
 }
 
 variable "altcha_hmac_key" {
