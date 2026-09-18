@@ -29,3 +29,8 @@ override.tf.json
 # example: *tfplan*
 .temp.html 
 .temp.seed
+
+# Provider lock file.
+# Deliberately not committed in a reusable module: pinning providers here
+# would freeze what consumers resolve. In a root module the opposite holds.
+.terraform.lock.hcl
