@@ -1,0 +1,8 @@
+name: Lint
+on: [push, workflow_dispatch]
+jobs:
+  lint:
+    uses: wearetechnative/reusable_workflow_terraform/.github/workflows/lint.yml@feat/split-lint-and-scan
+    with:
+      strict: false
+      skip-validate: false
