@@ -8,3 +8,5 @@ on:
 jobs:
   lint:
     uses: wearetechnative/reusable_workflow_terraform/.github/workflows/lint.yml@v1
+    with:
+      strict: true

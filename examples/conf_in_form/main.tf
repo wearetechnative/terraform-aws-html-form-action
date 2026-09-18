@@ -1,5 +1,5 @@
 module "form_action_example_com" {
-  source         = "wearetechnative/html-form-action/aws"
+  source = "../../"
 
   name           = "example-com-form-action-handler"
   allowed_origin = "*" # You should set this to the website url when live

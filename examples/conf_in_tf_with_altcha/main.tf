@@ -1,5 +1,5 @@
 module "form_action_example_com" {
-  source         = "wearetechnative/html-form-action/aws"
+  source = "../../"
 
   name           = "example-com-form-action-handler"
   to_email       = "webinbox@example.com" # Make sure SES accepts this email address or complete domain
@@ -16,5 +16,5 @@ output "example_com_form_action_url_for_form" {
 
 output "example_com_challenge_url_for_altcha_widget" {
   description = "Place this URL in your the Altcha Widget."
-  value = module.form_action_example_com.message_altcha_challenge_urlmessage_post_url
+  value = module.form_action_example_com.message_altcha_challenge_url
 }

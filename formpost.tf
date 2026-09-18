@@ -78,11 +78,16 @@ resource "aws_api_gateway_integration" "message_formpost" {
 }
 
 resource "aws_api_gateway_deployment" "formpost" {
-  stage_name = "formpost"
   rest_api_id = aws_api_gateway_rest_api.formpost.id
   depends_on = [
     aws_api_gateway_integration.message_formpost,
   ]
+}
+
+resource "aws_api_gateway_stage" "formpost" {
+  deployment_id = aws_api_gateway_deployment.formpost.id
+  rest_api_id   = aws_api_gateway_rest_api.formpost.id
+  stage_name    = "formpost"
 }
 
 module "resource_cors_formpost" {
